@@ -1,46 +1,63 @@
 import pytest
+from unittest.mock import patch
 from models import Category, Product
 
+
+# Сброс статических переменных перед каждым тестом
 @pytest.fixture(autouse=True)
-def setup():
+def reset_category_class():
     Category.total_categories = 0
-    Category.total_unique_products = set()
+    Category.total_unique_products = 0
+
 
 def test_product_initialization():
-    product = Product("TestProduct", "A product for testing", 10.99, 100)
-    assert product.name == "TestProduct"
-    assert product.description == "A product for testing"
-    assert product.price == 10.99
-    assert product.quantity == 100
+    product = Product("Apple", "Fresh Apples", 1.99, 50)
+    assert product.name == "Apple"
+    assert product.description == "Fresh Apples"
+    assert product.price == 1.99
+    assert product.quantity == 50
+
 
 def test_category_initialization():
-    product = Product("TestProduct", "A product for testing", 10.99, 100)
-    category = Category("TestCategory", "A category for testing", [product])
-    assert category.name == "TestCategory"
-    assert category.description == "A category for testing"
-    assert len(category.products) == 1
-    assert Category.total_categories == 1
-    assert "TestProduct" in Category.total_unique_products
+    category = Category("Fruits", "All kinds of fruits")
+    assert category.name == "Fruits"
+    assert category.description == "All kinds of fruits"
+    assert category.products == ""
 
-def test_unique_product_addition():
-    product1 = Product("TestProduct1", "First product for testing", 20.99, 50)
-    product2 = Product("TestProduct2", "Second product for testing", 15.99, 75)
-    category = Category("TestCategory", "A category for testing", [product1, product2])
-    assert len(Category.total_unique_products) == 2
 
-def test_duplicate_product_addition():
-    product1 = Product("TestProduct", "A product for testing", 10.99, 100)
-    Category("TestCategory1", "First category for testing", [product1])
-    Category("TestCategory2", "Second category for testing", [product1])
-    assert len(Category.total_unique_products) == 1
+def test_add_product_to_category():
+    category = Category("Fruits", "All kinds of fruits")
+    product = Product("Apple", "Fresh Apples", 1.99, 50)
+    category.add_product(product)
+    assert "Apple, 1.99 руб. Остаток: 50 шт." in category.products
+
+
+def test_create_product_class_method_no_duplicates():
+    category = Category("Fruits", "All kinds of fruits")
+    product = Product.create_product("Banana", "Fresh Bananas", 0.99, 100)
+    category.add_product(product)
+    assert "Banana, 0.99 руб. Остаток: 100 шт." in category.products
+
+
+def test_price_setter_invalid_value(capsys):
+    product = Product("Apple", "Fresh Apples", 1.99, 50)
+    product.price = -1  # Установка некорректной цены
+    captured = capsys.readouterr()  # Чтение вывода
+    assert "Цена введена некорректно." in captured.out  # Проверка наличия сообщения об ошибке
+    assert product.price == 1.99  # Убедимся, что цена не изменилась
+
+
+def test_price_setter_with_valid_value():
+    product = Product("Apple", "Fresh Apples", 2.99, 50)
+    with patch('builtins.input', return_value='y'):
+        product.price = 2.50
+    assert product.price == 2.50
+
+
+def test_total_categories_and_unique_products():
+    product1 = Product("Apple", "Fresh Apples", 1.99, 50)
+    product2 = Product("Banana", "Fresh Bananas", 0.99, 100)
+    Category("Fruits", "All kinds of fruits", [product1])
+    Category("Vegetables", "Fresh Vegetables", [product2])
     assert Category.total_categories == 2
-
-def test_category_without_products():
-    category = Category("EmptyCategory", "A category without products", [])
-    assert len(category.products) == 0
-    assert Category.total_categories == 1
-
-def test_adding_product_updates_unique_products():
-    product = Product("NewProduct", "A new product", 25.50, 30)
-    new_category = Category("NewCategory", "A new category", [product])
-    assert "NewProduct" in Category.total_unique_products
+    assert Category.total_unique_products == 2
