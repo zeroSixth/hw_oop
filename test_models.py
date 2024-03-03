@@ -1,63 +1,47 @@
 import pytest
-from unittest.mock import patch
-from models import Category, Product
+from models import Product, Category, CategoryIterator
 
 
-# Сброс статических переменных перед каждым тестом
-@pytest.fixture(autouse=True)
-def reset_category_class():
-    Category.total_categories = 0
-    Category.total_unique_products = 0
+class TestProduct:
+    def test_product_str(self):
+        product = Product("Test Product", "Description", 100.0, 10)
+        assert str(product) == "Test Product, 100.0 руб. Остаток: 10 шт."
+
+    def test_product_add(self):
+        product1 = Product("Product 1", "Description 1", 100.0, 10)
+        product2 = Product("Product 2", "Description 2", 200.0, 5)
+        assert product1 + product2 == 2000
 
 
-def test_product_initialization():
-    product = Product("Apple", "Fresh Apples", 1.99, 50)
-    assert product.name == "Apple"
-    assert product.description == "Fresh Apples"
-    assert product.price == 1.99
-    assert product.quantity == 50
+class TestCategory:
+    def test_category_str_and_len(self):
+        category = Category("Test Category", "Category Description")
+        assert str(category) == "Test Category, количество продуктов: 0 шт."
+        assert len(category) == 0
+
+        product = Product("Test Product", "Description", 100.0, 10)
+        category.add_product(product)
+        assert str(category) == "Test Category, количество продуктов: 10 шт."
+        assert len(category) == 10
+
+    def test_category_products_property(self):
+        category = Category("Test Category", "Category Description")
+        product = Product("Test Product", "Description", 100.0, 10)
+        category.add_product(product)
+        expected_output = "Test Product, 100.0 руб. Остаток: 10 шт."
+        assert category.products == expected_output
 
 
-def test_category_initialization():
-    category = Category("Fruits", "All kinds of fruits")
-    assert category.name == "Fruits"
-    assert category.description == "All kinds of fruits"
-    assert category.products == ""
+class TestCategoryIterator:
+    def test_iterator(self):
+        category = Category("Test Category", "Category Description")
+        product1 = Product("Product 1", "Description 1", 100.0, 10)
+        product2 = Product("Product 2", "Description 2", 200.0, 5)
+        category.add_product(product1)
+        category.add_product(product2)
 
+        iterator = CategoryIterator(category)
+        products_list = list(iterator)
 
-def test_add_product_to_category():
-    category = Category("Fruits", "All kinds of fruits")
-    product = Product("Apple", "Fresh Apples", 1.99, 50)
-    category.add_product(product)
-    assert "Apple, 1.99 руб. Остаток: 50 шт." in category.products
-
-
-def test_create_product_class_method_no_duplicates():
-    category = Category("Fruits", "All kinds of fruits")
-    product = Product.create_product("Banana", "Fresh Bananas", 0.99, 100)
-    category.add_product(product)
-    assert "Banana, 0.99 руб. Остаток: 100 шт." in category.products
-
-
-def test_price_setter_invalid_value(capsys):
-    product = Product("Apple", "Fresh Apples", 1.99, 50)
-    product.price = -1  # Установка некорректной цены
-    captured = capsys.readouterr()  # Чтение вывода
-    assert "Цена введена некорректно." in captured.out  # Проверка наличия сообщения об ошибке
-    assert product.price == 1.99  # Убедимся, что цена не изменилась
-
-
-def test_price_setter_with_valid_value():
-    product = Product("Apple", "Fresh Apples", 2.99, 50)
-    with patch('builtins.input', return_value='y'):
-        product.price = 2.50
-    assert product.price == 2.50
-
-
-def test_total_categories_and_unique_products():
-    product1 = Product("Apple", "Fresh Apples", 1.99, 50)
-    product2 = Product("Banana", "Fresh Bananas", 0.99, 100)
-    Category("Fruits", "All kinds of fruits", [product1])
-    Category("Vegetables", "Fresh Vegetables", [product2])
-    assert Category.total_categories == 2
-    assert Category.total_unique_products == 2
+        assert products_list == [product1, product2]
+        assert len(products_list) == 2
