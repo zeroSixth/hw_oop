@@ -1,47 +1,22 @@
 import pytest
-from models import Product, Category, CategoryIterator
+from models import Product, Smartphone, LawnGrass, Category
 
 
-class TestProduct:
-    def test_product_str(self):
-        product = Product("Test Product", "Description", 100.0, 10)
-        assert str(product) == "Test Product, 100.0 руб. Остаток: 10 шт."
+def test_product_addition():
+    phone1 = Smartphone("Phone1", "High-end smartphone", 50000, 10, "High", "ModelX", 128, "Black")
+    phone2 = Smartphone("Phone2", "Budget smartphone", 20000, 20, "Medium", "ModelY", 64, "Blue")
+    assert phone1 + phone2 == (50000 * 10) + (20000 * 20)
 
-    def test_product_add(self):
-        product1 = Product("Product 1", "Description 1", 100.0, 10)
-        product2 = Product("Product 2", "Description 2", 200.0, 5)
-        assert product1 + product2 == 2000
-
-
-class TestCategory:
-    def test_category_str_and_len(self):
-        category = Category("Test Category", "Category Description")
-        assert str(category) == "Test Category, количество продуктов: 0 шт."
-        assert len(category) == 0
-
-        product = Product("Test Product", "Description", 100.0, 10)
-        category.add_product(product)
-        assert str(category) == "Test Category, количество продуктов: 10 шт."
-        assert len(category) == 10
-
-    def test_category_products_property(self):
-        category = Category("Test Category", "Category Description")
-        product = Product("Test Product", "Description", 100.0, 10)
-        category.add_product(product)
-        expected_output = "Test Product, 100.0 руб. Остаток: 10 шт."
-        assert category.products == expected_output
+    grass1 = LawnGrass("Grass1", "High-quality lawn grass", 1000, 50, "Germany", 7, "Green")
+    with pytest.raises(TypeError):
+        _ = phone1 + grass1
 
 
-class TestCategoryIterator:
-    def test_iterator(self):
-        category = Category("Test Category", "Category Description")
-        product1 = Product("Product 1", "Description 1", 100.0, 10)
-        product2 = Product("Product 2", "Description 2", 200.0, 5)
-        category.add_product(product1)
-        category.add_product(product2)
+def test_category_product_addition():
+    electronics = Category("Electronics", "Gadgets and more")
+    phone = Smartphone("Phone1", "High-end smartphone", 50000, 10, "High", "ModelX", 128, "Black")
+    electronics.add_product(phone)
+    assert len(electronics.products) == 1
 
-        iterator = CategoryIterator(category)
-        products_list = list(iterator)
-
-        assert products_list == [product1, product2]
-        assert len(products_list) == 2
+    with pytest.raises(ValueError):
+        electronics.add_product("Not a Product Object")
