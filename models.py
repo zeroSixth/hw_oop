@@ -3,24 +3,27 @@ from abc import ABC, abstractmethod
 
 class LoggingMixin:
     def __repr__(self):
-        attributes = ', '.join(f"{k}={v}" for k, v in vars(self).items())
+        attributes = ', '.join([f"{key}={value}" for key, value in self.__dict__.items()])
         return f"{self.__class__.__name__}({attributes})"
 
 
-class AbstractProduct(ABC, LoggingMixin):
-    def __init__(self, name, description, price, quantity):
+class BaseProduct(ABC, LoggingMixin):
+    @abstractmethod
+    def __init__(self, name: str, description: str, price: float, quantity: int):
         self.name = name
         self.description = description
         self.price = price
         self.quantity = quantity
-        print(repr(self))
 
     @abstractmethod
     def __str__(self):
         pass
 
 
-class Product(AbstractProduct):
+class Product(BaseProduct):
+    def __init__(self, name, description, price, quantity):
+        super().__init__(name, description, price, quantity)
+
     def __str__(self):
         return f"{self.name}, {self.price} руб. Остаток: {self.quantity} шт."
 
@@ -33,6 +36,9 @@ class Smartphone(Product):
         self.memory = memory
         self.color = color
 
+    def __str__(self):
+        return super().__str__() + f", Модель: {self.model}, Цвет: {self.color}, Память: {self.memory}GB"
+
 
 class LawnGrass(Product):
     def __init__(self, name, description, price, quantity, country, germination_time, color):
@@ -41,38 +47,36 @@ class LawnGrass(Product):
         self.germination_time = germination_time
         self.color = color
 
-
-class AbstractEntity(ABC, LoggingMixin):
-    @abstractmethod
-    def summary(self):
-        pass
+    def __str__(self):
+        return super().__str__() + (f", Страна: {self.country}, "
+                                    f"Время прорастания: {self.germination_time} дней, Цвет: {self.color}")
 
 
-class Order(AbstractEntity):
-    def __init__(self, product, quantity):
-        super().__init__()
-        self.product = product
-        self.quantity = quantity
-        self.total_cost = product.price * quantity
-        print(repr(self))
-
-    def summary(self):
-        return (f"Заказ: {self.product.name}, Количество: {self.quantity}, "
-                f"Итог: {self.total_cost} руб.")
-
-
-class Category(AbstractEntity):
-    def __init__(self, name, description):
-        super().__init__()
+class Category:
+    def __init__(self, name: str, description: str):
         self.name = name
         self.description = description
         self.products = []
-        print(repr(self))
 
     def add_product(self, product):
-        if not isinstance(product, AbstractProduct):
+        if not isinstance(product, Product):
             raise ValueError("Можно добавлять только продукты и их наследников")
         self.products.append(product)
 
-    def summary(self):
-        return f"Категория: {self.name}, Всего продуктов: {len(self.products)}"
+    def __str__(self):
+        return f"{self.name}, {len(self.products)} продукт(ов)"
+
+
+class Order(LoggingMixin):
+    def __init__(self, product, quantity):
+        if not isinstance(product, Product):
+            raise ValueError("Товар должен быть продуктом или его наследником")
+        self.product = product
+        self.quantity = quantity
+        self.total_cost = self.calculate_total_cost()
+
+    def calculate_total_cost(self):
+        return self.product.price * self.quantity
+
+    def __str__(self):
+        return f"Заказ: {self.product.name}, Количество: {self.quantity}, Итоговая стоимость: {self.total_cost} руб."

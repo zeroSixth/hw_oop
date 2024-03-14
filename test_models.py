@@ -1,22 +1,38 @@
 import pytest
-from models import Product, Smartphone, LawnGrass, Category
+from models import Product, Smartphone, LawnGrass, Category, Order
 
 
-def test_product_addition():
-    phone1 = Smartphone("Phone1", "High-end smartphone", 50000, 10, "High", "ModelX", 128, "Black")
-    phone2 = Smartphone("Phone2", "Budget smartphone", 20000, 20, "Medium", "ModelY", 64, "Blue")
-    assert phone1 + phone2 == (50000 * 10) + (20000 * 20)
-
-    grass1 = LawnGrass("Grass1", "High-quality lawn grass", 1000, 50, "Germany", 7, "Green")
-    with pytest.raises(TypeError):
-        _ = phone1 + grass1
+def test_product_initialization_and_str():
+    product = Product("TestProduct", "A product for testing", 100.0, 10)
+    assert str(product) == "TestProduct, 100.0 руб. Остаток: 10 шт."
 
 
-def test_category_product_addition():
-    electronics = Category("Electronics", "Gadgets and more")
-    phone = Smartphone("Phone1", "High-end smartphone", 50000, 10, "High", "ModelX", 128, "Black")
-    electronics.add_product(phone)
-    assert len(electronics.products) == 1
+def test_smartphone_specific_behavior():
+    smartphone = Smartphone("TestPhone", "A smartphone for testing", 30000, 5,
+                            "High", "ModelX", 128, "Black")
+    assert str(smartphone).endswith(", Модель: ModelX, Цвет: Black, Память: 128GB")
+
+
+def test_lawn_grass_specific_behavior():
+    grass = LawnGrass("TestGrass", "Grass for testing", 500, 20, "USA",
+                      7, "Green")
+    assert str(grass).endswith(", Страна: USA, Время прорастания: 7 дней, Цвет: Green")
+
+
+def test_category_handling_products():
+    category = Category("TestCategory", "A category for testing")
+    product = Product("TestProduct", "A product for testing", 100.0, 10)
+    category.add_product(product)
+    assert str(category) == "TestCategory, 1 продукт(ов)"
+    with pytest.raises(ValueError):
+        category.add_product("not a product")
+
+
+def test_order_calculation_and_str():
+    product = Product("TestProduct", "A product for testing", 100.0, 10)
+    order = Order(product, 2)
+    assert order.calculate_total_cost() == 200.0
+    assert str(order) == "Заказ: TestProduct, Количество: 2, Итоговая стоимость: 200.0 руб."
 
     with pytest.raises(ValueError):
-        electronics.add_product("Not a Product Object")
+        Order("not a product", 1)
