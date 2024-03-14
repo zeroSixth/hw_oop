@@ -1,18 +1,28 @@
-class Product:
-    def __init__(self, name: str, description: str, price: float, quantity: int):
+from abc import ABC, abstractmethod
+
+
+class LoggingMixin:
+    def __repr__(self):
+        attributes = ', '.join(f"{k}={v}" for k, v in vars(self).items())
+        return f"{self.__class__.__name__}({attributes})"
+
+
+class AbstractProduct(ABC, LoggingMixin):
+    def __init__(self, name, description, price, quantity):
         self.name = name
         self.description = description
         self.price = price
         self.quantity = quantity
+        print(repr(self))
 
+    @abstractmethod
+    def __str__(self):
+        pass
+
+
+class Product(AbstractProduct):
     def __str__(self):
         return f"{self.name}, {self.price} руб. Остаток: {self.quantity} шт."
-
-    def __add__(self, other):
-        if type(self) is type(other):
-            return self.price * self.quantity + other.price * other.quantity
-        else:
-            raise TypeError("Нельзя складывать продукты разных классов")
 
 
 class Smartphone(Product):
@@ -23,9 +33,6 @@ class Smartphone(Product):
         self.memory = memory
         self.color = color
 
-    def __str__(self):
-        return super().__str__() + f", Модель: {self.model}, Цвет: {self.color}, Память: {self.memory}GB"
-
 
 class LawnGrass(Product):
     def __init__(self, name, description, price, quantity, country, germination_time, color):
@@ -34,21 +41,38 @@ class LawnGrass(Product):
         self.germination_time = germination_time
         self.color = color
 
-    def __str__(self):
-        return super().__str__() + (f", Страна: {self.country}, Время прорастания: {self.germination_time} дней, Цвет:"
-                                    f" {self.color}")
+
+class AbstractEntity(ABC, LoggingMixin):
+    @abstractmethod
+    def summary(self):
+        pass
 
 
-class Category:
-    def __init__(self, name: str, description: str):
+class Order(AbstractEntity):
+    def __init__(self, product, quantity):
+        super().__init__()
+        self.product = product
+        self.quantity = quantity
+        self.total_cost = product.price * quantity
+        print(repr(self))
+
+    def summary(self):
+        return (f"Заказ: {self.product.name}, Количество: {self.quantity}, "
+                f"Итог: {self.total_cost} руб.")
+
+
+class Category(AbstractEntity):
+    def __init__(self, name, description):
+        super().__init__()
         self.name = name
         self.description = description
         self.products = []
+        print(repr(self))
 
     def add_product(self, product):
-        if not isinstance(product, Product):
+        if not isinstance(product, AbstractProduct):
             raise ValueError("Можно добавлять только продукты и их наследников")
         self.products.append(product)
 
-    def __str__(self):
-        return f"{self.name}, {len(self.products)} продукт(ов)"
+    def summary(self):
+        return f"Категория: {self.name}, Всего продуктов: {len(self.products)}"
