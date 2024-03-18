@@ -1,33 +1,50 @@
 import pytest
-from models import Product, Smartphone, LawnGrass, Category, Order
+from models import Product, Smartphone, LawnGrass, Category, Order, ZeroQuantityError
 
-def test_product_init_and_str():
-    product = Product("TestProduct", "Description", 100.0, 5)
-    assert product.__str__() == "TestProduct, 100.0 руб. Остаток: 5 шт."
-    assert "Product(name=TestProduct, description=Description, price=100.0, quantity=5)" == product.__repr__()
 
-def test_smartphone_init_and_str():
-    smartphone = Smartphone("TestPhone", "Smartphone Description", 30000, 10, "High", "ModelX", 128, "Black")
-    expected_str = "TestPhone, 30000 руб. Остаток: 10 шт., Модель: ModelX, Цвет: Black, Память: 128GB"
-    assert smartphone.__str__() == expected_str
+def test_product_creation_and_str_representation():
+    product = Product("Тестовый продукт", "Описание", 100, 10)
+    assert str(product) == "Тестовый продукт, 100 руб. В наличии: 10 шт."
 
-def test_lawn_grass_init_and_str():
-    grass = LawnGrass("TestGrass", "Grass Description", 500, 20, "USA", 7, "Green")
-    expected_str = "TestGrass, 500 руб. Остаток: 20 шт., Страна: USA, Время прорастания: 7 дней, Цвет: Green"
-    assert grass.__str__() == expected_str
 
-def test_category_add_product_and_str():
-    category = Category("TestCategory", "Category Description")
-    product = Product("TestProduct", "Description", 100.0, 5)
-    category.add_product(product)
-    assert category.__str__() == "TestCategory, 1 продукт(ов)"
-    with pytest.raises(ValueError):
-        category.add_product("not a product")
+def test_product_zero_quantity_exception():
+    with pytest.raises(ZeroQuantityError):
+        Product("Тестовый продукт", "Описание", 100, 0)
 
-def test_order_init_calculate_total_cost_and_str():
-    product = Product("TestProduct", "Description", 100.0, 5)
+
+def test_smartphone_creation_and_str_representation():
+    smartphone = Smartphone("Телефон", "Описание", 30000, 5, "Высокая", "X100", 128, "Черный")
+    expected_str = "Телефон, 30000 руб. В наличии: 5 шт., Модель: X100, Цвет: Черный, Память: 128GB"
+    assert str(smartphone) == expected_str
+
+
+def test_lawn_grass_creation_and_str_representation():
+    lawn_grass = LawnGrass("Газон", "Описание", 500, 20, "Россия", 7, "Зеленый")
+    expected_str = "Газон, 500 руб. В наличии: 20 шт., Страна: Россия, Время прорастания: 7 дней, Цвет: Зеленый"
+    assert str(lawn_grass) == expected_str
+
+
+def test_category_add_product_and_average_price():
+    category = Category("Категория", "Описание")
+    product1 = Product("Продукт 1", "Описание", 100, 10)
+    product2 = Product("Продукт 2", "Описание", 200, 5)
+    category.add_product(product1)
+    category.add_product(product2)
+    assert category.average_price() == 150
+    assert str(category) == "Категория, всего товаров: 2"
+
+
+def test_order_creation_and_total_cost():
+    product = Product("Продукт", "Описание", 100, 10)
     order = Order(product, 2)
-    assert order.calculate_total_cost() == 200.0
-    assert order.__str__() == "Заказ: TestProduct, Количество: 2, Итоговая стоимость: 200.0 руб."
-    with pytest.raises(ValueError):
-        Order("not a product", 1)
+    assert order.total_cost == 200
+    assert str(order) == "Заказ: Продукт, Количество: 2, Общая стоимость: 200 руб."
+
+
+def test_order_zero_quantity_exception():
+    product = Product("Продукт", "Описание", 100, 10)
+    with pytest.raises(ZeroQuantityError):
+        Order(product, 0)
+
+# Запускайте тесты с помощью pytest
+# pytest test_products.py
