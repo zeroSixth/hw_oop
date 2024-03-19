@@ -1,5 +1,5 @@
 import pytest
-from models import Product, Smartphone, LawnGrass, Category, Order, ZeroQuantityError
+from models import Product, Smartphone, LawnGrass, Category, Order
 
 
 # Тест создания продукта и представления его в виде строки
@@ -10,7 +10,7 @@ def test_product_creation_and_str_representation():
 
 # Тест на исключение при попытке создать продукт с нулевым количеством
 def test_product_zero_quantity_exception():
-    with pytest.raises(ZeroQuantityError):
+    with pytest.raises(ValueError):
         Product("Тестовый продукт", "Описание", 100, 0)
 
 
@@ -35,7 +35,7 @@ def test_category_add_product_and_average_price():
     product2 = Product("Продукт 2", "Описание", 200, 5)
     category.add_product(product1)
     category.add_product(product2)
-    assert category.average_price() == 150  # Проверка правильности расчета средней цены
+    assert category.average_price() == 150
     assert str(category) == "Категория, всего товаров: 2"
 
 
@@ -43,12 +43,12 @@ def test_category_add_product_and_average_price():
 def test_order_creation_and_total_cost():
     product = Product("Продукт", "Описание", 100, 10)
     order = Order(product, 2)
-    assert order.total_cost == 200  # Проверка расчета общей стоимости заказа
+    assert order.total_cost == 200
     assert str(order) == "Заказ: Продукт, Количество: 2, Общая стоимость: 200 руб."
 
 
 # Тест на исключение при попытке создать заказ с нулевым количеством товара
 def test_order_zero_quantity_exception():
     product = Product("Продукт", "Описание", 100, 10)
-    with pytest.raises(ZeroQuantityError):
+    with pytest.raises(ValueError):
         Order(product, 0)
